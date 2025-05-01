@@ -19,17 +19,13 @@ exports.handler = async (event, context) => {
   const openai = new OpenAI({ apiKey: key });
 
   const prompt = `
-You are a helpful assistant recommending AI tools. 
-Return ONLY a valid JSON array (no markdown, no explanation) for the following use case:
-
-"${useCase}"
-
-The array must contain exactly 4 objects. Each object must include:
+Suggest 4 AI tools for the following use case: "${useCase}".
+Return only a valid JSON array of 4 objects.
+Each object should include:
 - name (string)
 - description (string)
 - link (URL string)
-
-Output ONLY the JSON array, with no introduction or formatting.
+No explanation, no markdown. Return only JSON.
 `;
 
   try {
@@ -39,34 +35,20 @@ Output ONLY the JSON array, with no introduction or formatting.
       temperature: 0.7,
     });
 
-    let resultText = response.choices[0].message.content.trim();
-    console.log("🧪 Raw GPT output:", resultText.slice(0, 120));
+    let content = response.choices[0].message.content.trim();
+    const firstBracket = content.indexOf("[");
+    const lastBracket = content.lastIndexOf("]");
+    const jsonString = content.slice(firstBracket, lastBracket + 1);
 
-    // Try to clean output if it starts with markdown or explanations
-    const firstBrace = resultText.indexOf("[");
-    const lastBrace = resultText.lastIndexOf("]");
-    if (firstBrace !== -1 && lastBrace !== -1) {
-      resultText = resultText.slice(firstBrace, lastBrace + 1); // trim to array
-    }
-
-    // Validate JSON
-    try {
-      const parsed = JSON.parse(resultText); // just to confirm it's valid
-      console.log("✅ JSON validated");
-    } catch (e) {
-      console.error("❌ Invalid JSON format:", e.message);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "GPT output was not valid JSON." }),
-      };
-    }
+    const tools = JSON.parse(jsonString);
+    console.log("✅ Parsed JSON tools:", tools.length);
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ tools: resultText }),
+      body: JSON.stringify({ tools }),
     };
   } catch (err) {
-    console.error("❌ GPT API Error:", err.message);
+    console.error("❌ GPT or JSON Error:", err.message);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message }),
