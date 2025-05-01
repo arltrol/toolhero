@@ -1,6 +1,7 @@
 const OpenAI = require("openai");
+const https = require("https");
 
-exports.handler = async (event, context) => {
+exports.handler = async function(event) {
   console.log("🔹 Function triggered");
   const key = process.env.OPENAI_API_KEY;
 
@@ -28,6 +29,20 @@ Each object should include:
 No explanation, no markdown. Return only JSON.
 `;
 
+  const isValidURL = async (url) => {
+    return new Promise((resolve) => {
+      try {
+        const req = https.request(url, { method: "HEAD", timeout: 3000 }, (res) => {
+          resolve(res.statusCode >= 200 && res.statusCode < 400);
+        });
+        req.on("error", () => resolve(false));
+        req.end();
+      } catch {
+        resolve(false);
+      }
+    });
+  };
+
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -42,25 +57,27 @@ No explanation, no markdown. Return only JSON.
 
     let tools = JSON.parse(jsonString);
 
-    // Filter out tools with invalid links
-    tools = tools.filter(tool => {
+    // Filter out invalid or empty websites
+    const filtered = [];
+    for (const tool of tools) {
       try {
-        const url = new URL(tool.link);
-        return (
-          url.hostname &&
-          !url.hostname.includes("godaddy") &&
-          !url.hostname.endsWith(".godaddysites.com") &&
-          !url.hostname.includes("example.com")
-        );
-      } catch (e) {
-        return false;
-      }
-    });
+        const urlObj = new URL(tool.link);
+        const domain = urlObj.hostname;
+        if (
+          !domain.includes("godaddy") &&
+          !domain.includes("example.com") &&
+          await isValidURL(tool.link)
+        ) {
+          filtered.push(tool);
+        }
+      } catch {}
+    }
 
-    console.log("✅ Valid tools:", tools.length);
+    console.log("✅ Valid tools:", filtered.length);
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ tools }),
+      body: JSON.stringify({ tools: filtered }),
     };
   } catch (err) {
     console.error("❌ GPT or JSON Error:", err.message);
