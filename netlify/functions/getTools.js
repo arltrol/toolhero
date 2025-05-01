@@ -20,13 +20,12 @@ exports.handler = async function(event) {
   const openai = new OpenAI({ apiKey: key });
 
   const prompt = `
-Suggest 4 AI tools for the following use case: "${useCase}".
-Return only a valid JSON array of 4 objects.
-Each object should include:
+Suggest at least 8 AI tools for the following use case: "${useCase}".
+Return only a valid JSON array. Each object must include:
 - name (string)
 - description (string)
 - link (URL string)
-No explanation, no markdown. Return only JSON.
+No explanation or markdown. Output only JSON.
 `;
 
   const isValidURL = async (url) => {
@@ -57,9 +56,10 @@ No explanation, no markdown. Return only JSON.
 
     let tools = JSON.parse(jsonString);
 
-    // Filter out invalid or empty websites
-    const filtered = [];
+    // Validate and filter max 5 tools with good links
+    const validTools = [];
     for (const tool of tools) {
+      if (validTools.length >= 5) break;
       try {
         const urlObj = new URL(tool.link);
         const domain = urlObj.hostname;
@@ -68,16 +68,15 @@ No explanation, no markdown. Return only JSON.
           !domain.includes("example.com") &&
           await isValidURL(tool.link)
         ) {
-          filtered.push(tool);
+          validTools.push(tool);
         }
       } catch {}
     }
 
-    console.log("✅ Valid tools:", filtered.length);
-
+    console.log("✅ Valid tools returned:", validTools.length);
     return {
       statusCode: 200,
-      body: JSON.stringify({ tools: filtered }),
+      body: JSON.stringify({ tools: validTools }),
     };
   } catch (err) {
     console.error("❌ GPT or JSON Error:", err.message);
