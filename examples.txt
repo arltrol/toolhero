@@ -1,5 +1,13 @@
 AI for medium sized charities
+AI for automating charity donor communications
+AI to improve charity event planning
 AI for small law firms
+AI to automate RFP writing for agencies
+AI for due diligence in M&A work
+AI for real estate agencies
+AI for GDPR compliance reviews
+AI for dental clinic operations
+AI for boutique consulting firms
 AI for small accounting firms
 Transfer Pricing AI for large corporates
 AI for small bakeries
