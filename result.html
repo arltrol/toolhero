@@ -85,6 +85,19 @@
           container.appendChild(div);
         });
 
+        // Add Calendly consult link
+        const consultDiv = document.createElement("div");
+        consultDiv.style.marginTop = "30px";
+        consultDiv.innerHTML = `
+          <p style="font-size: 16px; text-align: center;">
+            Need help implementing this stack? <br>
+            <a href="https://calendly.com/roland2017/30min?month=2025-05" target="_blank">
+              Book a free 30-min AI consult.
+            </a>
+          </p>
+        `;
+        container.appendChild(consultDiv);
+
       } catch (error) {
         clearInterval(interval);
         document.getElementById("loading").innerText = `⚠️ ${error.message}`;
