@@ -22,7 +22,7 @@ exports.handler = async (event, context) => {
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4o", // ✅ Use latest supported GPT-4 model
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
     });
