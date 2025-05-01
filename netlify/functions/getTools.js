@@ -40,9 +40,24 @@ No explanation, no markdown. Return only JSON.
     const lastBracket = content.lastIndexOf("]");
     const jsonString = content.slice(firstBracket, lastBracket + 1);
 
-    const tools = JSON.parse(jsonString);
-    console.log("✅ Parsed JSON tools:", tools.length);
+    let tools = JSON.parse(jsonString);
 
+    // Filter out tools with invalid links
+    tools = tools.filter(tool => {
+      try {
+        const url = new URL(tool.link);
+        return (
+          url.hostname &&
+          !url.hostname.includes("godaddy") &&
+          !url.hostname.endsWith(".godaddysites.com") &&
+          !url.hostname.includes("example.com")
+        );
+      } catch (e) {
+        return false;
+      }
+    });
+
+    console.log("✅ Valid tools:", tools.length);
     return {
       statusCode: 200,
       body: JSON.stringify({ tools }),
