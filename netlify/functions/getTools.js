@@ -5,10 +5,10 @@ exports.handler = async (event, context) => {
   const key = process.env.OPENAI_API_KEY;
 
   if (!key) {
-    console.error("❌ OPENAI_API_KEY is missing in environment variables.");
+    console.error("❌ OPENAI_API_KEY is missing.");
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "OPENAI_API_KEY is not set in environment." }),
+      body: JSON.stringify({ error: "OPENAI_API_KEY not set." }),
     };
   }
 
@@ -18,17 +18,25 @@ exports.handler = async (event, context) => {
 
   const openai = new OpenAI({ apiKey: key });
 
-  const prompt = `Suggest 4 AI tools for the following use case: "${useCase}". Format them in JSON with fields: name, description, and link.`;
+  const prompt = `
+  Suggest 4 AI tools for the following use case: "${useCase}".
+  Return only a JSON array with the following fields:
+  - name
+  - description
+  - link
+
+  Do not include any explanation, title, or markdown. Just return valid JSON.
+  `;
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o", // ✅ Use latest supported GPT-4 model
+      model: "gpt-4o",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
     });
 
-    const resultText = response.choices[0].message.content;
-    console.log("✅ GPT response received");
+    const resultText = response.choices[0].message.content.trim();
+    console.log("✅ GPT Response:", resultText.slice(0, 100));
 
     return {
       statusCode: 200,
