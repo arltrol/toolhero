@@ -1,3 +1,7 @@
-AI for medium based charities
-Transfer Pricing for large corporates
-AI for bakeries
+AI for medium sized charities
+AI for small law firms
+AI for small accounting firms
+Transfer Pricing AI for large corporates
+AI for small bakeries
+AI for finding a partner
+AI for network security 
