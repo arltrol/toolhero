@@ -19,14 +19,18 @@ exports.handler = async (event, context) => {
   const openai = new OpenAI({ apiKey: key });
 
   const prompt = `
-  Suggest 4 AI tools for the following use case: "${useCase}".
-  Return only a JSON array with the following fields:
-  - name
-  - description
-  - link
+You are a helpful assistant recommending AI tools. 
+Return ONLY a valid JSON array (no markdown, no explanation) for the following use case:
 
-  Do not include any explanation, title, or markdown. Just return valid JSON.
-  `;
+"${useCase}"
+
+The array must contain exactly 4 objects. Each object must include:
+- name (string)
+- description (string)
+- link (URL string)
+
+Output ONLY the JSON array, with no introduction or formatting.
+`;
 
   try {
     const response = await openai.chat.completions.create({
@@ -35,8 +39,27 @@ exports.handler = async (event, context) => {
       temperature: 0.7,
     });
 
-    const resultText = response.choices[0].message.content.trim();
-    console.log("✅ GPT Response:", resultText.slice(0, 100));
+    let resultText = response.choices[0].message.content.trim();
+    console.log("🧪 Raw GPT output:", resultText.slice(0, 120));
+
+    // Try to clean output if it starts with markdown or explanations
+    const firstBrace = resultText.indexOf("[");
+    const lastBrace = resultText.lastIndexOf("]");
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      resultText = resultText.slice(firstBrace, lastBrace + 1); // trim to array
+    }
+
+    // Validate JSON
+    try {
+      const parsed = JSON.parse(resultText); // just to confirm it's valid
+      console.log("✅ JSON validated");
+    } catch (e) {
+      console.error("❌ Invalid JSON format:", e.message);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "GPT output was not valid JSON." }),
+      };
+    }
 
     return {
       statusCode: 200,
