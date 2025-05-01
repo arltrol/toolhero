@@ -1,5 +1,4 @@
 const OpenAI = require("openai");
-const https = require("https");
 
 exports.handler = async function(event) {
   console.log("🔹 Function triggered");
@@ -21,26 +20,12 @@ exports.handler = async function(event) {
 
   const prompt = `
 Suggest at least 8 AI tools for the following use case: "${useCase}".
-Return only a valid JSON array. Each object must include:
+Return only a valid JSON array of objects with the following fields:
 - name (string)
 - description (string)
 - link (URL string)
 No explanation or markdown. Output only JSON.
 `;
-
-  const isValidURL = async (url) => {
-    return new Promise((resolve) => {
-      try {
-        const req = https.request(url, { method: "HEAD", timeout: 3000 }, (res) => {
-          resolve(res.statusCode >= 200 && res.statusCode < 400);
-        });
-        req.on("error", () => resolve(false));
-        req.end();
-      } catch {
-        resolve(false);
-      }
-    });
-  };
 
   try {
     const response = await openai.chat.completions.create({
@@ -55,28 +40,11 @@ No explanation or markdown. Output only JSON.
     const jsonString = content.slice(firstBracket, lastBracket + 1);
 
     let tools = JSON.parse(jsonString);
+    const sliced = tools.slice(0, 5); // just take the first 5
 
-    // Validate and filter max 5 tools with good links
-    const validTools = [];
-    for (const tool of tools) {
-      if (validTools.length >= 5) break;
-      try {
-        const urlObj = new URL(tool.link);
-        const domain = urlObj.hostname;
-        if (
-          !domain.includes("godaddy") &&
-          !domain.includes("example.com") &&
-          await isValidURL(tool.link)
-        ) {
-          validTools.push(tool);
-        }
-      } catch {}
-    }
-
-    console.log("✅ Valid tools returned:", validTools.length);
     return {
       statusCode: 200,
-      body: JSON.stringify({ tools: validTools }),
+      body: JSON.stringify({ tools: sliced }),
     };
   } catch (err) {
     console.error("❌ GPT or JSON Error:", err.message);
