@@ -87,4 +87,5 @@
           });
 
         } catch (parseError) {
-          throw new Error("GPT returned non-JSON
+          throw new Error("GPT returned non-JSON:\n\n" + data.tools + "\n\nError: " + parseError.message);
+
