@@ -1,45 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Your ToolStack</title>
-<style>
-body { font-family: sans-serif; margin: 0; padding: 20px; background: #f0f0f0; display: flex; flex-direction: column; align-items: center; }
-.tool { background: white; padding: 20px; margin: 10px; border-radius: 12px; max-width: 500px; width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-.tool h3 { margin-top: 10px; } .tool p { margin: 5px 0; }
-</style>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your AI ToolStack</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    #loading {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .tool {
+      background: white;
+      padding: 20px;
+      margin: 10px;
+      border-radius: 12px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .tool h3 { margin-top: 10px; }
+    .tool p { margin: 5px 0; }
+    .tool a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .tool a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-<h1>Your AI ToolStack</h1>
-<p id="loading">Generating your personalized recommendations...</p>
-<div id="results"></div>
-<script>
-const params = new URLSearchParams(window.location.search);
-const useCase = params.get("useCase");
+  <h1>Your AI ToolStack</h1>
+  <p id="loading">Generating your personalized recommendations...</p>
+  <div id="results"></div>
 
-async function fetchRecommendations() {
-  try {
-    const response = await fetch("/.netlify/functions/getTools", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ useCase })
-    });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
-    if (!data.tools) throw new Error("No tools found in response");
-    const tools = JSON.parse(data.tools);
-    document.getElementById("loading").style.display = "none";
-    const container = document.getElementById("results");
-    tools.forEach(tool => {
-      const div = document.createElement("div");
-      div.className = "tool";
-      div.innerHTML = `<h3>${tool.name}</h3><p>${tool.description}</p><a href="${tool.link}" target="_blank">Try it</a>`;
-      container.appendChild(div);
-    });
-  } catch (error) {
-    document.getElementById("loading").innerText = `Error: ${error.message}`;
-    console.error("Fetch error:", error);
-  }
-}
-fetchRecommendations();
-</script>
-</body></html>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const useCase = params.get("useCase");
+
+    async function fetchRecommendations() {
+      try {
+        const response = await fetch("/.netlify/functions/getTools", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ useCase })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        try {
+          const tools = JSON.parse(data.tools); // Parse JSON string returned by GPT
+          document.getElementById("loading").style.display = "none";
+          const container = document.getElementById("results");
+
+          tools.forEach(tool => {
+            const div = document.createElement("div");
+            div.className = "tool";
+            div.innerHTML = `
+              <h3>${tool.name}</h3>
+              <p>${tool.description}</p>
+              <a href="${tool.link}" target="_blank">Try it</a>
+            `;
+            container.appendChild(div);
+          });
+
+        } catch (parseError) {
+          throw new Error("GPT returned non-JSON
